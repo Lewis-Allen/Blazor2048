@@ -2,8 +2,9 @@
 @inject IJSRuntime JSRuntime
 
 
-<div class="jumbotron" @onkeydown="@KeyDown" tabindex="0" @ref="gameDiv">
-    <h1 class="display-4"> @KeyPressed </h1>
+<div class="jumbotron" @onkeydown="@KeyDown" tabindex="0" @ref="GameDiv">
+    <h1 class="display-4">Score: @state.GetScore()</h1>
+    <h1 class="display-4">@(state.GetGameOverStatus() ? "Game Over" : "")</h1>
     <table>
         @foreach (Tile[] row in state.GetRows())
         {
@@ -21,27 +22,34 @@
 
 @code {
 
-    string KeyPressed = "";
-
     GameState state = new GameState();
 
-    protected ElementReference gameDiv;
+    protected ElementReference GameDiv;
 
     protected async override Task OnAfterRenderAsync(bool firstRender)
     {
         if (firstRender)
         {
-            await JSRuntime.InvokeVoidAsync("SetFocusToElement", gameDiv);
+            await JSRuntime.InvokeVoidAsync("SetFocusToElement", GameDiv);
         }
     }
 
     protected void KeyDown(KeyboardEventArgs args)
     {
-        KeyPressed = $"Key Pressed: [{args.Key}]";// get key pressed in the arguments
-
-        if(Enum.TryParse(args.Key, true, out GameMove move))
+        switch (args.Key)
         {
-            state.Move(move);
+            case "ArrowUp":
+                state.Move(GameMove.UP);
+                break;
+            case "ArrowRight":
+                state.Move(GameMove.RIGHT);
+                break;
+            case "ArrowDown":
+                state.Move(GameMove.DOWN);
+                break;
+            case "ArrowLeft":
+                state.Move(GameMove.LEFT);
+                break;
         }
     }
 
