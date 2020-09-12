@@ -136,6 +136,34 @@ app {
     top: 0.5rem;
 }
 
+
+table {
+    margin: 1em auto;
+}
+
+td {
+    width: 30px;
+    height: 30px;
+    border: 1px solid;
+    text-align: center;
+}
+
+td:first-child {
+    border-left: solid;
+}
+
+tr:first-child {
+    border-top: solid;
+}
+
+td:nth-child(4) {
+    border-right: solid;
+}
+
+tr:nth-child(4) {
+    border-bottom: solid;
+}
+
 @media (max-width: 767.98px) {
     .main .top-row:not(.auth) {
         display: none;

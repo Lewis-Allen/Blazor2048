@@ -1,5 +1,52 @@
 ﻿@page "/"
+@inject IJSRuntime JSRuntime
 
-<h1>Hello, world!</h1>
 
-Welcome to your new app.
+<div class="jumbotron" @onkeydown="@KeyDown" tabindex="0" @ref="gameDiv">
+    <h1 class="display-4"> @KeyPressed </h1>
+    <table>
+        @foreach (Tile[] row in state.GetRows())
+        {
+            <tr>
+                @foreach (Tile tile in row)
+                {
+                    <td>@(tile.Value == 0 ? "" : tile.Value.ToString())</td>
+                }
+            </tr>
+        }
+    </table>
+</div>
+
+<button class="btn btn-primary" @onclick="Reset">Reset</button>
+
+@code {
+
+    string KeyPressed = "";
+
+    GameState state = new GameState();
+
+    protected ElementReference gameDiv;
+
+    protected async override Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            await JSRuntime.InvokeVoidAsync("SetFocusToElement", gameDiv);
+        }
+    }
+
+    protected void KeyDown(KeyboardEventArgs args)
+    {
+        KeyPressed = $"Key Pressed: [{args.Key}]";// get key pressed in the arguments
+
+        if(Enum.TryParse(args.Key, true, out GameMove move))
+        {
+            state.Move(move);
+        }
+    }
+
+    public void Reset()
+    {
+        state.ResetGame();
+    }
+}
