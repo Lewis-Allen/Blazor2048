@@ -194,34 +194,35 @@ namespace Blazor2048
 
         private bool HasLost()
         {
-            bool hasEmpties = !Tiles.ToList().Any(t => t.Value == 0);
+            if (Tiles.ToList().Any(t => t.Value == 0))
+                return false;
 
-            bool consecutiveDuplicates = false;
+            // Look for consecutive duplicates.
+            bool rowStuck = true;
             foreach(Tile[] row in Rows)
             {
                 for(var i = 0; i < row.Length - 1; i++)
                 {
                     if (row[i].Value == row[i + 1].Value)
                     {
-                        consecutiveDuplicates = true;
-                        break;
+                        rowStuck = false;
                     }
                 }
             }
 
+            bool columnStuck = true;
             foreach (Tile[] column in Columns)
             {
                 for (var i = 0; i < column.Length - 1; i++)
                 {
                     if (column[i].Value == column[i + 1].Value)
                     {
-                        consecutiveDuplicates = true;
-                        break;
+                        columnStuck = false;
                     }
                 }
             }
 
-            return hasEmpties && consecutiveDuplicates;
+            return rowStuck && columnStuck;
         }
 
         private void GenerateNewTile()
