@@ -1,8 +1,7 @@
 ﻿@page "/"
 @inject IJSRuntime JSRuntime
 
-
-<div class="jumbotron" @onkeydown="@KeyDown" tabindex="0" @ref="GameDiv" style="width: 100%; height: 100%;">
+<div class="jumbotron" @onkeydown="@KeyDown" tabindex="0" @ref="GameDiv" @onfocusout="SetFocus">
     <h1 class="display-4">Score: @state.GetScore()</h1>
     <h1 class="display-4">High-Score: @state.GetHighScore()</h1>
     <h1 class="display-4">@(state.GetGameOverStatus() ? "Game Over" : "")</h1>
@@ -31,8 +30,13 @@
     {
         if (firstRender)
         {
-            await JSRuntime.InvokeVoidAsync("SetFocusToElement", GameDiv);
+            await SetFocus();
         }
+    }
+
+    protected async Task SetFocus()
+    {
+        await JSRuntime.InvokeVoidAsync("SetFocusToElement", GameDiv);
     }
 
     protected void KeyDown(KeyboardEventArgs args)
