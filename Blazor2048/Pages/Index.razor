@@ -2,8 +2,9 @@
 @inject IJSRuntime JSRuntime
 
 
-<div class="jumbotron" @onkeydown="@KeyDown" tabindex="0" @ref="GameDiv">
+<div class="jumbotron" @onkeydown="@KeyDown" tabindex="0" @ref="GameDiv" style="width: 100%; height: 100%;">
     <h1 class="display-4">Score: @state.GetScore()</h1>
+    <h1 class="display-4">High-Score: @state.GetHighScore()</h1>
     <h1 class="display-4">@(state.GetGameOverStatus() ? "Game Over" : "")</h1>
     <table>
         @foreach (Tile[] row in state.GetRows())
@@ -56,6 +57,7 @@
     public void Reset()
     {
         state.ResetGame();
+        JSRuntime.InvokeVoidAsync("SetFocusToElement", GameDiv);
     }
 
     public string GetColourClass(int value)

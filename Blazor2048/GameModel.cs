@@ -13,6 +13,7 @@ namespace Blazor2048
         public Tile[][] Rows { get; } = new Tile[4][];
         public Tile[][] Columns { get; } = new Tile[4][];
         public int Score { get; private set; } = 0;
+        public int HighScore { get; private set; } = 0;
         public bool GameOver { get; private set; } = false;
 
         private readonly Random r = new Random();
@@ -62,14 +63,14 @@ namespace Blazor2048
         {
             int oldValue = Rows[x][y].Value;
             Rows[x][y].Value = value;
-            Score += value - oldValue;
+            AddScore(value - oldValue);
         }
 
         public void SetValue(Tile tile, int value)
         {
             int oldValue = tile.Value;
             tile.Value = value;
-            Score += value - oldValue;
+            AddScore(value - oldValue);
         }
 
         public void Move(GameMove move)
@@ -77,7 +78,6 @@ namespace Blazor2048
             if (GameOver)
                 return;
 
-            Console.WriteLine($"Moving {move}");
             // Was anything moved from this input?
             bool HasMoved = false;
 
@@ -174,16 +174,18 @@ namespace Blazor2048
             // Can move but not merge.
             if(row[x1].Value == 0 && row[x2].Value != 0)
             {
-                SetValue(row[x1], row[x2].Value);
+                var value = row[x2].Value;
                 SetValue(row[x2], 0);
+                SetValue(row[x1], value);
                 moved = true;
             }
 
             // Can move and merge.
             if(row[x1].Value == row[x2].Value && row[x1].Value != 0)
             {
-                SetValue(row[x1], row[x1].Value + row[x2].Value);
+                var value = row[x1].Value + row[x2].Value;
                 SetValue(row[x2], 0);
+                SetValue(row[x1], value);
                 moved = true;
                 stop = true;
                 return;
@@ -225,13 +227,20 @@ namespace Blazor2048
             return rowStuck && columnStuck;
         }
 
+        private void AddScore(int scoreToAdd)
+        {
+            Score += scoreToAdd;
+            if (Score > HighScore)
+                HighScore = Score;
+        }
+
         private void GenerateNewTile()
         {
             List<Tile> emptyTiles = Tiles.ToList().Where(t => t.Value == 0).ToList();
             int index = r.Next(emptyTiles.Count);
 
             emptyTiles[index].Value = GenerateNewTileValue();
-            Score += emptyTiles[index].Value;
+            AddScore(emptyTiles[index].Value);
         }
 
         private int GenerateNewTileValue()

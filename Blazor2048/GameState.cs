@@ -27,6 +27,7 @@ namespace Blazor2048
         public Tile[][] GetRows() => Model.Rows;
         public Tile[][] GetColumns() => Model.Columns;
         public int GetScore() => Model.Score;
+        public int GetHighScore() => Model.HighScore;
         public bool GetGameOverStatus() => Model.GameOver;
     }
 
