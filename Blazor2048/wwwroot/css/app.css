@@ -133,18 +133,24 @@ app {
     cursor: pointer;
     position: absolute;
     right: 0.75rem;
+    border: 5px solid;
     top: 0.5rem;
 }
 
 
 table {
     margin: 1em auto;
+    font-size: 32px;
+    border: 5px solid;
+}
+
+table, td {
 }
 
 td {
-    width: 30px;
-    height: 30px;
-    border: 1px solid;
+    width: 100px;
+    height: 100px;
+    border: 5px solid;
     text-align: center;
 }
 
@@ -162,6 +168,69 @@ td:nth-child(4) {
 
 tr:nth-child(4) {
     border-bottom: solid;
+}
+
+.tile {
+
+}
+
+.tile-blank {
+    background-color: #FBEAEB;
+}
+
+.tile-yellow {
+    color: #292826;
+    background-color: #F9D342;
+}
+
+.tile-pink {
+    color: #3D15FF;
+    background-color: #DF678C;
+}
+
+.tile-blue {
+    color: #CCF381;
+    background-color: #4831D4;
+}
+
+.tile-orange {
+    color: #4A274F;
+    background-color: #F0A07C;
+}
+
+.tile-red {
+    color: #2B3252;
+    background-color: #EF5455;
+}
+
+.tile-purple {
+    color: #FFF748;
+    background-color: #3C1A5B;
+}
+
+.tile-black {
+    color: #EC4D37;
+    background-color: #1D1B1B;
+}
+
+.tile-turquoise {
+    color: #8BD8BD;
+    background-color: #243665;
+}
+
+.tile-orange {
+    color: #141A46;
+    background-color: #EC8B5E;
+}
+
+.tile-green {
+    color: #FFE67C;
+    background-color: #295F2D;
+}
+
+.tile-bright-pink {
+    color: #080A52;
+    background-color: #EB2188;
 }
 
 @media (max-width: 767.98px) {

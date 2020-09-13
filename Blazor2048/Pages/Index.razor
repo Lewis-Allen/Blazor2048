@@ -11,7 +11,7 @@
             <tr>
                 @foreach (Tile tile in row)
                 {
-                    <td>@(tile.Value == 0 ? "" : tile.Value.ToString())</td>
+                    <td class="@GetColourClass(tile.Value)">@(tile.Value == 0 ? "" : tile.Value.ToString())</td>
                 }
             </tr>
         }
@@ -56,5 +56,24 @@
     public void Reset()
     {
         state.ResetGame();
+    }
+
+    public string GetColourClass(int value)
+    {
+        return value switch
+        {
+            2 => "tile-yellow",
+            4 => "tile-pink",
+            8 => "tile-blue",
+            16 => "tile-orange",
+            32 => "tile-red",
+            64 => "tile-purple",
+            128 => "tile-black",
+            256 => "tile-turquoise",
+            512 => "tile-orange",
+            1024 => "tile-green",
+            2048 => "tile-bright-pink",
+            _ => "tile-blank"
+        };
     }
 }
