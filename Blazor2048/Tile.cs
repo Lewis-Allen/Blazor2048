@@ -18,5 +18,20 @@ namespace Blazor2048
         {
             return new Tile(Value);
         }
+
+        public override bool Equals(object obj)
+        {
+            if(obj is Tile tile)
+            {
+                return tile.Value == Value;
+            }
+
+            return false;
+        }
+
+        public override int GetHashCode()
+        {
+            return base.GetHashCode();
+        }
     }
 }
