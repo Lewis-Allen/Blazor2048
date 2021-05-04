@@ -7,6 +7,8 @@ namespace Blazor2048
 {
     public class Tile : ICloneable
     {
+        public int AnimationFactor { get; set; } = 0;
+
         public Tile(int value)
         {
             Value = value;

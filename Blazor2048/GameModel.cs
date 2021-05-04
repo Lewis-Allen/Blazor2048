@@ -11,6 +11,9 @@ namespace Blazor2048
 {
     public class GameModel
     {
+        public Tile[] PreMoveTiles { get; set; } = new Tile[BOARD_HEIGHT * BOARD_WIDTH];
+        public Tile[] PostMoveTiles { get; set; } = new Tile[BOARD_HEIGHT * BOARD_WIDTH];
+        public Tile[] PostGenerateTiles { get; set; } = new Tile[BOARD_HEIGHT * BOARD_WIDTH];
         public Tile[] Tiles { get; } = new Tile[BOARD_HEIGHT * BOARD_WIDTH];
         public Tile[][] Rows { get; } = new Tile[BOARD_HEIGHT][];
         public Tile[][] Columns { get; } = new Tile[BOARD_WIDTH][];
@@ -18,6 +21,8 @@ namespace Blazor2048
         public int HighScore { get; private set; } = 0;
         public bool GameOver { get; private set; } = false;
         private readonly Random r = new Random();
+        public bool NewTileFlip { get; set; } = true;
+        public bool IsMoving { get; set; } = false;
 
         private const int BOARD_WIDTH = 4;
         private const int BOARD_HEIGHT = 4;
@@ -57,10 +62,16 @@ namespace Blazor2048
             Tiles.ToList().ForEach(t => t.Value = 0);
             GameOver = false;
 
+            PreMoveTiles = Tiles.Select(a => (Tile)a.Clone()).ToArray();
+
+            PostMoveTiles = Tiles.Select(a => (Tile)a.Clone()).ToArray();
+
             for (var i = 0; i < 2; i++)
             {
                 GenerateNewTile();
             }
+
+            PostGenerateTiles = Tiles.Select(a => (Tile)a.Clone()).ToArray();
         }
 
         private bool HasLost()
@@ -88,10 +99,14 @@ namespace Blazor2048
             return r.Next(0, 100) <= 89 ? 2 : 4;
         }
 
-        public void Move(GameMove move)
+        public async Task Move(GameMove move)
         {
             if (GameOver)
                 return;
+
+            PreMoveTiles = Tiles.Select(a => (Tile)a.Clone()).ToArray();
+
+            IsMoving = true;
 
             // Was anything moved from this input?
             bool HasMoved = move switch
@@ -105,9 +120,24 @@ namespace Blazor2048
 
             if (HasMoved)
             {
+                PostMoveTiles = Tiles.Select(a => (Tile)a.Clone()).ToArray();
+
+                await Task.Delay(190);
+
+                foreach(var tile in Tiles)
+                {
+                    tile.AnimationFactor = 0;
+                }
+
                 GenerateNewTile();
+
+                PostGenerateTiles = Tiles.Select(a => (Tile)a.Clone()).ToArray();
+
                 GameOver = HasLost();
+
+                NewTileFlip = !NewTileFlip;
             }
+            IsMoving = false;
         }
 
         private static bool MoveLine(Tile[] tiles)
@@ -119,9 +149,7 @@ namespace Blazor2048
                 {
                     // Can't move.
                     if (tiles[x1].Value != 0 && tiles[x2].Value != 0 && tiles[x1].Value != tiles[x2].Value)
-                    {
                         break;
-                    }
 
                     // Can move but not merge.
                     if (tiles[x1].Value == 0 && tiles[x2].Value != 0)
@@ -129,6 +157,7 @@ namespace Blazor2048
                         var value = tiles[x2].Value;
                         tiles[x2].Value = 0;
                         tiles[x1].Value = value;
+                        tiles[x2].AnimationFactor = x2 - x1;
                         hasMoved = true;
                         continue;
                     }
@@ -139,6 +168,7 @@ namespace Blazor2048
                         var value = tiles[x1].Value + tiles[x2].Value;
                         tiles[x2].Value = 0;
                         tiles[x1].Value = value;
+                        tiles[x2].AnimationFactor = x2 - x1;
                         hasMoved = true;
                         break;
                     }
@@ -147,5 +177,7 @@ namespace Blazor2048
 
             return hasMoved;
         }
+
+
     }
 }

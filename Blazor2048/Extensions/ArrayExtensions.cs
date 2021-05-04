@@ -29,5 +29,24 @@ namespace Blazor2048.Extensions
             }
             return reversed;
         }
+
+        /// <summary>
+        /// Splits an array into several smaller arrays.
+        /// </summary>
+        /// <typeparam name="T">The type of the array.</typeparam>
+        /// <param name="array">The array to split.</param>
+        /// <param name="size">The size of the smaller arrays.</param>
+        /// <returns>An array containing smaller arrays.</returns>
+        public static Tile[][] Split(this Tile[] array, int size)
+        {
+            List<Tile[]> tiles = new();
+
+            for(var i = 0; i < 4; i++)
+            {
+                tiles.Add(array.Skip(i * 4).Take(4).ToArray());
+            }
+
+            return tiles.ToArray();
+        }
     }
 }

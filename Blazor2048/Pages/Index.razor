@@ -6,14 +6,53 @@
     <h1 class="display-4">High-Score: @state.GetHighScore()</h1>
     <h1 class="display-4">@(state.GetGameOverStatus() ? "Game Over" : "")</h1>
     <table>
-        @foreach (Tile[] row in state.GetRows())
+        @if (state.IsMoving())
         {
-            <tr>
-                @foreach (Tile tile in row)
-                {
-                    <td class="@GetColourClass(tile.Value)">@(tile.Value == 0 ? "" : tile.Value.ToString())</td>
-                }
-            </tr>
+            @for (var i = 0; i < state.GetPreMoveRows().Length; i++)
+            {
+                <tr>
+                    @for (var j = 0; j < state.GetPreMoveRows()[i].Length; j++)
+                    {
+                        <td>
+                            @if (state.GetPreMoveRows()[j][i].Value > 0)
+                            {
+                                <div class="tile @GetColourClass(state.GetPreMoveRows()[j][i].Value) @(GetCurrentMoveAnimationClassName() + state.GetRows()[i][j].AnimationFactor)">@(state.GetPreMoveRows()[j][i].Value == 0 ? "" : state.GetPreMoveRows()[j][i].Value.ToString())</div>
+                            }
+                            else
+                            {
+                                <div class="tile @GetColourClass(0)"></div>
+                            }
+                        </td>
+                    }
+
+                </tr>
+            }
+        }
+        else
+        {
+            @for (var i = 0; i < state.GetRows().Length; i++)
+            {
+                <tr>
+                    @for (var j = 0; j < state.GetRows()[i].Length; j++)
+                    {
+                        <td>
+                            @if (state.GetPostGenerateRows()[j][i].Value > state.GetPostMoveRows()[j][i].Value)
+                            {
+                                <div class="tile @GetColourClass(state.GetRows()[i][j].Value) @(state.NewTileFlip() ? "new-tile" : "new-tile2")">@(state.GetRows()[i][j].Value == 0 ? "" : state.GetRows()[i][j].Value.ToString())</div>
+                            }
+                            else if (state.GetRows()[i][j].Value > 0)
+                            {
+                                <div class="tile @GetColourClass(state.GetRows()[i][j].Value)">@(state.GetRows()[i][j].Value == 0 ? "" : state.GetRows()[i][j].Value.ToString())</div>
+                            }
+                            else
+                            {
+                                <div class="tile @GetColourClass(0)"></div>
+                            }
+                        </td>
+                    }
+
+                </tr>
+            }
         }
     </table>
 </div>
@@ -23,6 +62,8 @@
 @code {
 
     GameState state = new GameState();
+
+    public int CurrentMove { get; set; } = 100;
 
     protected ElementReference GameDiv;
 
@@ -39,21 +80,29 @@
         await JSRuntime.InvokeVoidAsync("SetFocusToElement", GameDiv);
     }
 
-    protected void KeyDown(KeyboardEventArgs args)
+    protected async Task KeyDown(KeyboardEventArgs args)
     {
         switch (args.Key)
         {
             case "ArrowUp":
-                state.Move(GameMove.UP);
+                CurrentMove = 0;
+                await state.Move(GameMove.UP);
+                CurrentMove = 100;
                 break;
             case "ArrowRight":
-                state.Move(GameMove.RIGHT);
+                CurrentMove = 1;
+                await state.Move(GameMove.RIGHT);
+                CurrentMove = 100;
                 break;
             case "ArrowDown":
-                state.Move(GameMove.DOWN);
+                CurrentMove = 2;
+                await state.Move(GameMove.DOWN);
+                CurrentMove = 100;
                 break;
             case "ArrowLeft":
-                state.Move(GameMove.LEFT);
+                CurrentMove = 3;
+                await state.Move(GameMove.LEFT);
+                CurrentMove = 100;
                 break;
         }
     }
@@ -82,4 +131,13 @@
             _ => "tile-blank"
         };
     }
+
+    public string GetCurrentMoveAnimationClassName() => CurrentMove switch
+    {
+        0 => "slide-Y",
+        1 => "slideX",
+        2 => "slideY",
+        3 => "slide-X",
+        _ => ""
+    };
 }
