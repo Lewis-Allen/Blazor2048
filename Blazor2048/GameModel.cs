@@ -11,21 +11,26 @@ namespace Blazor2048
 {
     public class GameModel
     {
-        public Tile[] PreMoveTiles { get; set; } = new Tile[BOARD_HEIGHT * BOARD_WIDTH];
-        public Tile[] PostMoveTiles { get; set; } = new Tile[BOARD_HEIGHT * BOARD_WIDTH];
-        public Tile[] PostGenerateTiles { get; set; } = new Tile[BOARD_HEIGHT * BOARD_WIDTH];
+        // Board sizes
+        private const int BOARD_HEIGHT = 4;
+        private const int BOARD_WIDTH = 4;
+
+        // Representation of the board.
         public Tile[] Tiles { get; } = new Tile[BOARD_HEIGHT * BOARD_WIDTH];
         public Tile[][] Rows { get; } = new Tile[BOARD_HEIGHT][];
         public Tile[][] Columns { get; } = new Tile[BOARD_WIDTH][];
+
+        // Helper properties to store state at various points in the move. Used for animations.
+        public Tile[] PreMoveTiles { get; set; } = new Tile[BOARD_HEIGHT * BOARD_WIDTH];
+        public Tile[] PostMoveTiles { get; set; } = new Tile[BOARD_HEIGHT * BOARD_WIDTH];
+        public Tile[] PostGenerateTiles { get; set; } = new Tile[BOARD_HEIGHT * BOARD_WIDTH];
+
         public int Score { get; private set; } = 0;
         public int HighScore { get; private set; } = 0;
         public bool GameOver { get; private set; } = false;
-        private readonly Random r = new Random();
-        public bool NewTileFlip { get; set; } = true;
         public bool IsMoving { get; set; } = false;
 
-        private const int BOARD_WIDTH = 4;
-        private const int BOARD_HEIGHT = 4;
+        private readonly Random r = new Random();
 
         public GameModel()
         {
@@ -91,6 +96,7 @@ namespace Blazor2048
             int index = r.Next(emptyTiles.Count);
 
             emptyTiles[index].Value = GenerateNewTileValue();
+            emptyTiles[index].NewTile = true;
             CalcScore();
         }
 
@@ -122,11 +128,13 @@ namespace Blazor2048
             {
                 PostMoveTiles = Tiles.Select(a => (Tile)a.Clone()).ToArray();
 
-                await Task.Delay(190);
+                // This delay is here to give the current tiles time to animate before the new tiles are rendered.
+                await Task.Delay(140);
 
                 foreach(var tile in Tiles)
                 {
                     tile.AnimationFactor = 0;
+                    tile.NewTile = false;
                 }
 
                 GenerateNewTile();
@@ -134,8 +142,6 @@ namespace Blazor2048
                 PostGenerateTiles = Tiles.Select(a => (Tile)a.Clone()).ToArray();
 
                 GameOver = HasLost();
-
-                NewTileFlip = !NewTileFlip;
             }
             IsMoving = false;
         }

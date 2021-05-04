@@ -2,21 +2,23 @@
 @inject IJSRuntime JSRuntime
 
 <div class="jumbotron" @onkeydown="@KeyDown" tabindex="0" @ref="GameDiv" @onfocusout="SetFocus">
-    <h1 class="display-4">Score: @state.GetScore()</h1>
-    <h1 class="display-4">High-Score: @state.GetHighScore()</h1>
-    <h1 class="display-4">@(state.GetGameOverStatus() ? "Game Over" : "")</h1>
+    <h1 class="display-4">Score: @State.GetScore()</h1>
+    <h1 class="display-4">High-Score: @State.GetHighScore()</h1>
+    <h1 class="display-4">@(State.GetGameOverStatus() ? "Game Over" : "")</h1>
     <table>
-        @if (state.IsMoving())
+        @if (State.IsMoving())
         {
-            @for (var i = 0; i < state.GetPreMoveRows().Length; i++)
+            @for (var y = 0; y < State.GetPreMoveRows().Length; y++)
             {
                 <tr>
-                    @for (var j = 0; j < state.GetPreMoveRows()[i].Length; j++)
+                    @for (var x = 0; x < State.GetPreMoveRows()[y].Length; x++)
                     {
-                        <td>
-                            @if (state.GetPreMoveRows()[j][i].Value > 0)
+                        <td class="tile-blank">
+                            @if (State.GetPreMoveRows()[y][x].Value > 0)
                             {
-                                <div class="tile @GetColourClass(state.GetPreMoveRows()[j][i].Value) @(GetCurrentMoveAnimationClassName() + state.GetRows()[i][j].AnimationFactor)">@(state.GetPreMoveRows()[j][i].Value == 0 ? "" : state.GetPreMoveRows()[j][i].Value.ToString())</div>
+                                <div class="tile @GetColourClass(State.GetPreMoveRows()[y][x].Value) @(GetCurrentMoveAnimationClassName() + State.GetRows()[y][x].AnimationFactor)">
+                                    @GetDisplayString(State.GetPreMoveRows()[y][x].Value)
+                                </div>
                             }
                             else
                             {
@@ -30,19 +32,19 @@
         }
         else
         {
-            @for (var i = 0; i < state.GetRows().Length; i++)
+            @for (var y = 0; y < State.GetRows().Length; y++)
             {
                 <tr>
-                    @for (var j = 0; j < state.GetRows()[i].Length; j++)
+                    @for (var x = 0; x < State.GetRows()[y].Length; x++)
                     {
-                        <td>
-                            @if (state.GetPostGenerateRows()[j][i].Value > state.GetPostMoveRows()[j][i].Value)
+                        <td class="tile-blank">
+                            @if (State.GetPostGenerateRows()[y][x].Value > State.GetPostMoveRows()[y][x].Value)
                             {
-                                <div class="tile @GetColourClass(state.GetRows()[i][j].Value) @(state.NewTileFlip() ? "new-tile" : "new-tile2")">@(state.GetRows()[i][j].Value == 0 ? "" : state.GetRows()[i][j].Value.ToString())</div>
+                                <div class="tile @GetColourClass(State.GetRows()[y][x].Value) @(State.GetRows()[y][x].NewTile ? "new-tile" : "")">@GetDisplayString(State.GetRows()[y][x].Value)</div>
                             }
-                            else if (state.GetRows()[i][j].Value > 0)
+                            else if (State.GetRows()[y][x].Value > 0)
                             {
-                                <div class="tile @GetColourClass(state.GetRows()[i][j].Value)">@(state.GetRows()[i][j].Value == 0 ? "" : state.GetRows()[i][j].Value.ToString())</div>
+                                <div class="tile @GetColourClass(State.GetRows()[y][x].Value)">@GetDisplayString(State.GetRows()[y][x].Value)</div>
                             }
                             else
                             {
@@ -61,18 +63,16 @@
 
 @code {
 
-    GameState state = new GameState();
+    GameState State = new GameState();
 
-    public int CurrentMove { get; set; } = 100;
+    public GameMove? CurrentMove { get; set; } = null;
 
     protected ElementReference GameDiv;
 
     protected async override Task OnAfterRenderAsync(bool firstRender)
     {
         if (firstRender)
-        {
             await SetFocus();
-        }
     }
 
     protected async Task SetFocus()
@@ -82,40 +82,32 @@
 
     protected async Task KeyDown(KeyboardEventArgs args)
     {
-        switch (args.Key)
+        if (State.IsMoving())
+            return;
+
+        CurrentMove = args.Key switch {
+            "ArrowUp" => GameMove.UP,
+            "ArrowRight" => GameMove.RIGHT,
+            "ArrowDown" => GameMove.DOWN,
+            "ArrowLeft" => GameMove.LEFT,
+            _ => null
+        };
+
+        if (CurrentMove.HasValue)
         {
-            case "ArrowUp":
-                CurrentMove = 0;
-                await state.Move(GameMove.UP);
-                CurrentMove = 100;
-                break;
-            case "ArrowRight":
-                CurrentMove = 1;
-                await state.Move(GameMove.RIGHT);
-                CurrentMove = 100;
-                break;
-            case "ArrowDown":
-                CurrentMove = 2;
-                await state.Move(GameMove.DOWN);
-                CurrentMove = 100;
-                break;
-            case "ArrowLeft":
-                CurrentMove = 3;
-                await state.Move(GameMove.LEFT);
-                CurrentMove = 100;
-                break;
+            await State.Move(CurrentMove.Value);
+            CurrentMove = null;
         }
     }
 
     public void Reset()
     {
-        state.ResetGame();
+        State.ResetGame();
         JSRuntime.InvokeVoidAsync("SetFocusToElement", GameDiv);
     }
 
     public string GetColourClass(int value)
-    {
-        return value switch
+        => value switch
         {
             2 => "tile-yellow",
             4 => "tile-pink",
@@ -130,14 +122,17 @@
             2048 => "tile-bright-pink",
             _ => "tile-blank"
         };
-    }
 
-    public string GetCurrentMoveAnimationClassName() => CurrentMove switch
-    {
-        0 => "slide-Y",
-        1 => "slideX",
-        2 => "slideY",
-        3 => "slide-X",
-        _ => ""
-    };
+    public string GetDisplayString(int value)
+        => value == 0 ? "" : value.ToString();
+
+    public string GetCurrentMoveAnimationClassName()
+        => CurrentMove switch
+        {
+            GameMove.UP => "slide-Y",
+            GameMove.RIGHT => "slideX",
+            GameMove.DOWN => "slideY",
+            GameMove.LEFT => "slide-X",
+            _ => ""
+        };
 }

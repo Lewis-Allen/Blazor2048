@@ -30,13 +30,6 @@ namespace Blazor2048.Extensions
             return reversed;
         }
 
-        /// <summary>
-        /// Splits an array into several smaller arrays.
-        /// </summary>
-        /// <typeparam name="T">The type of the array.</typeparam>
-        /// <param name="array">The array to split.</param>
-        /// <param name="size">The size of the smaller arrays.</param>
-        /// <returns>An array containing smaller arrays.</returns>
         public static Tile[][] Split(this Tile[] array, int size)
         {
             List<Tile[]> tiles = new();
@@ -47,6 +40,24 @@ namespace Blazor2048.Extensions
             }
 
             return tiles.ToArray();
+        }
+
+        public static T[][] Transpose<T>(this T[][] array)
+        {
+            var transposed = new T[array.Length][];
+
+            for (var y = 0; y < transposed.Length; y++)
+                transposed[y] = new T[array[y].Length];
+
+            for(var y = 0; y < array.Length; y++)
+            {
+                for(var x = 0; x < array[y].Length; x++)
+                {
+                    transposed[x][y] = array[y][x];
+                }
+            }
+
+            return transposed;
         }
     }
 }

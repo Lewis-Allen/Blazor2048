@@ -27,17 +27,16 @@ namespace Blazor2048
 
         public Tile[] GetTiles() => Model.Tiles;
         public Tile[] GetPreMoveTiles() => Model.PreMoveTiles;
-        public Tile[][] GetPreMoveRows() => Model.PreMoveTiles.Split(4).ToArray();
+        public Tile[][] GetPreMoveRows() => Model.PreMoveTiles.Split(4).ToArray().Transpose();
         public Tile[] GetPostMoveTiles() => Model.PostMoveTiles;
-        public Tile[][] GetPostMoveRows() => Model.PostMoveTiles.Split(4).ToArray();
+        public Tile[][] GetPostMoveRows() => Model.PostMoveTiles.Split(4).ToArray().Transpose();
         public Tile[] GetPostGenerateTiles() => Model.PostGenerateTiles;
-        public Tile[][] GetPostGenerateRows() => Model.PostGenerateTiles.Split(4).ToArray();
+        public Tile[][] GetPostGenerateRows() => Model.PostGenerateTiles.Split(4).ToArray().Transpose();
         public Tile[][] GetRows() => Model.Rows;
         public Tile[][] GetColumns() => Model.Columns;
         public int GetScore() => Model.Score;
         public int GetHighScore() => Model.HighScore;
         public bool GetGameOverStatus() => Model.GameOver;
-        public bool NewTileFlip() => Model.NewTileFlip;
         public bool IsMoving() => Model.IsMoving;
     }
 
