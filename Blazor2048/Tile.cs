@@ -5,7 +5,7 @@ using System.Threading.Tasks;
 
 namespace Blazor2048
 {
-    public class Tile
+    public class Tile : ICloneable
     {
         public Tile(int value)
         {
@@ -13,5 +13,10 @@ namespace Blazor2048
         }
 
         public int Value { get; set; }
+
+        public object Clone()
+        {
+            return new Tile(Value);
+        }
     }
 }
