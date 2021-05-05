@@ -1,11 +1,16 @@
 ﻿@page "/"
-@inject IJSRuntime JSRuntime
 
-<div class="m-1">
-    <div class="jumbotron m-1" @onkeydown="@KeyDown" tabindex="0" @ref="GameDiv" @onfocusout="SetFocus">
-        <h1 class="display-4">Score: @State.GetScore()</h1>
-        <h1 class="display-4">High-Score: @State.GetHighScore()</h1>
-        <h1 class="display-4">@(State.GetGameOverStatus() ? "Game Over" : "")</h1>
+<div class="jumbotron h-100 w-100 m-0 p-0" @onkeydown="@KeyDown" tabindex="0" @ref="GameDiv">
+    <div class="d-flex flex-column">
+        <div class="d-flex flex-row justify-content-center">
+            <h1 style="color: red;">@(State.GetGameOverStatus() ? " Game Over" : "")</h1>
+        </div>
+        <div class="d-flex flex-row justify-content-center">
+            <h1>Score: @State.GetScore()</h1>
+        </div>
+        <div class="d-flex flex-row justify-content-center">
+            <h1>High-Score: @State.GetHighScore()</h1>
+        </div>
         <table @ontouchstart="HandleTouchStart" @ontouchend="HandleTouchEnd" style="touch-action: none">
             @if (State.IsMoving())
             {
@@ -58,10 +63,12 @@
                 }
             }
         </table>
+        <div class="d-flex flex-row justify-content-center">
+            <button class="btn btn-primary" @onclick="Reset" style="width: 100%; max-width: 405px;">Reset</button>
+        </div>
     </div>
-
-    <button class="btn btn-primary" @onclick="Reset">Reset</button>
 </div>
+
 
 
 @code {
@@ -129,7 +136,7 @@
 
     protected async Task SetFocus()
     {
-        await JSRuntime.InvokeVoidAsync("SetFocusToElement", GameDiv);
+        await GameDiv.FocusAsync();
     }
 
     protected async Task KeyDown(KeyboardEventArgs args)
@@ -152,10 +159,10 @@
         }
     }
 
-    public void Reset()
+    public async Task Reset()
     {
         State.ResetGame();
-        JSRuntime.InvokeVoidAsync("SetFocusToElement", GameDiv);
+        await SetFocus();
     }
 
     public string GetColourClass(int value)
