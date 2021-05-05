@@ -2,9 +2,10 @@
     font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif;
     margin: 0;
     padding: 0;
+    background-color: #e9ecef;
 }
 
-body, #app, .jumbotron {
+body, #app {
     min-height: 100vh;
     height: 100%;
 }
@@ -41,4 +42,26 @@ a, .btn-link {
     right: 0.75rem;
     border: 5px solid;
     top: 0.5rem;
+}
+
+.spinner {
+    border: 16px solid silver;
+    border-top: 16px solid #0069d9;
+    border-radius: 50%;
+    width: 80px;
+    height: 80px;
+    animation: spin 700ms linear infinite;
+    top: calc(25% - 40px);
+    left: calc(50% - 40px);
+    position: absolute;
+}
+
+@keyframes spin {
+    0% {
+        transform: rotate(0deg)
+    }
+
+    100% {
+        transform: rotate(360deg)
+    }
 }

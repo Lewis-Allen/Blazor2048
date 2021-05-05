@@ -2,10 +2,16 @@
     margin: 1em auto;
     font-size: 32px;
     border: 5px solid;
+    touch-action: none;
 }
 
 table, td {
     padding: 0;
+}
+
+#background, #main-container {
+    min-height: 100vh;
+    height: 100%;
 }
 
 td {
@@ -13,6 +19,15 @@ td {
     height: 100px;
     border: 5px solid black;
     text-align: center;
+}
+
+.reset {
+    width: 100%; 
+    max-width: 405px;
+}
+
+.game-over {
+    color: red;
 }
 
 .tile {
