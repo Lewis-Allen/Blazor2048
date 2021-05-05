@@ -128,9 +128,9 @@
                 CurrentMove = null;
             }
         }
-        catch (Exception e)
+        catch (Exception ex)
         {
-            Console.WriteLine("Gesture failed.");
+            Console.WriteLine($"Gesture failed. {ex.Message}");
         }
     }
 
