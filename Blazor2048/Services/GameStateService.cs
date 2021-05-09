@@ -15,13 +15,6 @@ namespace Blazor2048.Services
 
         // Representation of the board.
         private Tile[] Tiles { get; set; } = new Tile[Constants.BOARD_HEIGHT * Constants.BOARD_WIDTH];
-        private Tile[][] Rows { get; } = new Tile[Constants.BOARD_HEIGHT][];
-        private Tile[][] Columns { get; } = new Tile[Constants.BOARD_WIDTH][];
-
-        // Helper properties to store state at various points in a move. Used for animations.
-        private Tile[] PreMoveTiles { get; set; } = new Tile[Constants.BOARD_HEIGHT * Constants.BOARD_WIDTH];
-        private Tile[] PostMoveTiles { get; set; } = new Tile[Constants.BOARD_HEIGHT * Constants.BOARD_WIDTH];
-        private Tile[] PostGenerateTiles { get; set; } = new Tile[Constants.BOARD_HEIGHT * Constants.BOARD_WIDTH];
 
         public int Score { get; private set; } = 0;
         public int HighScore { get; private set; } = 0;
@@ -34,10 +27,7 @@ namespace Blazor2048.Services
             _localStorage = localStorage;
         }
 
-        public Tile[][] GetRows() => Rows;
-        public Tile[][] GetPreMoveRows() => PreMoveTiles.Split(4).ToArray().Transpose();
-        public Tile[][] GetPostMoveRows() => PostMoveTiles.Split(4).ToArray().Transpose();
-        public Tile[][] GetPostGenerateRows() => PostGenerateTiles.Split(4).ToArray().Transpose();
+        public Tile[][] GetRows() => Tiles.GetRows();
 
         public async Task InitializeAsync()
         {
@@ -52,18 +42,8 @@ namespace Blazor2048.Services
                 foreach (var tile in Tiles)
                     tile.NewTile = true;
 
-                PreMoveTiles = Tiles.Select(_ => new Tile(0)).ToArray();
-                PostMoveTiles = Tiles.Select(_ => new Tile(0)).ToArray();
-                PostGenerateTiles = Tiles.Select(t => new Tile(t.Value)).ToArray();
-
                 loadedFromStorage = true;
             }
-
-            for (var y = 0; y < Constants.BOARD_HEIGHT; y++)
-                Rows[y] = new Tile[Constants.BOARD_WIDTH];
-
-            for (var x = 0; x < Constants.BOARD_WIDTH; x++)
-                Columns[x] = new Tile[Constants.BOARD_HEIGHT];
 
             var counter = 0;
             for (var x = 0; x < Constants.BOARD_WIDTH; x++)
@@ -74,9 +54,6 @@ namespace Blazor2048.Services
 
                     if (!loadedFromStorage)
                         Tiles[counter] = tile;
-
-                    Rows[y][x] = tile;
-                    Columns[x][y] = tile;
 
                     counter++;
                 }
@@ -98,22 +75,16 @@ namespace Blazor2048.Services
             Tiles.ToList().ForEach(t => t.Value = 0);
             GameOver = false;
 
-            PreMoveTiles = Tiles.Select(t => new Tile(t.Value)).ToArray();
-
-            PostMoveTiles = Tiles.Select(t => new Tile(t.Value)).ToArray();
-
-            for (var i = 0; i < 2; i++)
+            for (var i = 0; i < Constants.BOARD_STARTING_TILES; i++)
             {
                 await GenerateNewTileAsync();
             }
-
-            PostGenerateTiles = Tiles.Select(t => new Tile(t.Value)).ToArray();
 
             await _localStorage.SetItemAsync(Constants.LS_TILES, Tiles);
         }
 
         private async Task<bool> HasLost()
-            => await Task.FromResult(Tiles.ToList().All(t => t.Value > 0) && !(Rows.Any(t => t.HasConsecutiveDuplicates()) || Columns.Any(t => t.HasConsecutiveDuplicates())));
+            => await Task.FromResult(Tiles.ToList().All(t => t.Value > 0) && !(Tiles.GetRows().Any(t => t.HasConsecutiveDuplicates()) || Tiles.GetColumns().Any(t => t.HasConsecutiveDuplicates())));
 
 
         private async Task CalcScoreAsync()
@@ -143,39 +114,37 @@ namespace Blazor2048.Services
 
         public async Task MoveAsync(GameMove move)
         {
-            if (GameOver)
+            if (GameOver || IsMoving)
                 return;
 
-            PreMoveTiles = Tiles.Select(t => new Tile(t.Value)).ToArray();
-
             IsMoving = true;
+
+            // Store a deep copy of the current tiles
+            Tile[] newTiles = Tiles.Select(t => new Tile(t.Value)).ToArray();
 
             // Was anything moved from this input?
             bool HasMoved = move switch
             {
-                GameMove.UP => Columns.Aggregate(false, (acc, column) => acc | MoveLine(column)),
-                GameMove.RIGHT => Rows.Aggregate(false, (acc, row) => acc | MoveLine(row.Reversed())),
-                GameMove.DOWN => Columns.Aggregate(false, (acc, column) => acc | MoveLine(column.Reversed())),
-                GameMove.LEFT => Rows.Aggregate(false, (acc, row) => acc | MoveLine(row)),
+                GameMove.UP => newTiles.GetColumns().Aggregate(false, (acc, column) => acc | MoveLine(column)),
+                GameMove.RIGHT => newTiles.GetRows().Aggregate(false, (acc, row) => acc | MoveLine(row.Reversed())),
+                GameMove.DOWN => newTiles.GetColumns().Aggregate(false, (acc, column) => acc | MoveLine(column.Reversed())),
+                GameMove.LEFT => newTiles.GetRows().Aggregate(false, (acc, row) => acc | MoveLine(row)),
                 _ => throw new NotSupportedException("Move not supported.")
             };
 
             if (HasMoved)
             {
-                PostMoveTiles = Tiles.Select(t => new Tile(t.Value)).ToArray();
 
-                // This delay is here to give the current tiles time to animate before the new tiles are rendered.
-                await Task.Delay(140);
+                // Attach the animation factor onto the current tile configuration but don't take the new value yet. This will render the animation classes.
+                Tiles = Tiles.Zip(newTiles, (a, b) => new Tile(a.Value, b.AnimationFactor)).ToArray();
 
-                foreach (var tile in Tiles)
-                {
-                    tile.AnimationFactor = 0;
-                    tile.NewTile = false;
-                }
+                // Delay so the animations can play.
+                await Task.Delay(120);
+
+                // Render the new tiles in their new positions.
+                Tiles = newTiles.Select(t => new Tile(t.Value)).ToArray();
 
                 await GenerateNewTileAsync();
-
-                PostGenerateTiles = Tiles.Select(t => new Tile(t.Value)).ToArray();
 
                 GameOver = await HasLost();
 
@@ -228,7 +197,5 @@ namespace Blazor2048.Services
 
             return hasMoved;
         }
-
-
     }
 }

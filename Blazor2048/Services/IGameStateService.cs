@@ -11,9 +11,6 @@ namespace Blazor2048.Services
         bool IsMoving { get; }
         int Score { get; }
 
-        Tile[][] GetPostGenerateRows();
-        Tile[][] GetPostMoveRows();
-        Tile[][] GetPreMoveRows();
         Tile[][] GetRows();
         Task InitializeAsync();
         Task MoveAsync(GameMove move);

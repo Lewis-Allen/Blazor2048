@@ -15,55 +15,26 @@
                 <h1>High-Score: @State.HighScore</h1>
             </div>
             <table @ontouchstart="HandleTouchStart" @ontouchend="HandleTouchEndAsync">
-                @if (State.IsMoving)
+                @for (var y = 0; y < State.GetRows().Length; y++)
                 {
-                    @for (var y = 0; y < State.GetPreMoveRows().Length; y++)
-                    {
-                        <tr>
-                            @for (var x = 0; x < State.GetPreMoveRows()[y].Length; x++)
-                            {
-                                <td class="tile-blank">
-                                    @if (State.GetPreMoveRows()[y][x].Value > 0)
-                                    {
-                                        <div class="tile @GetColourClass(State.GetPreMoveRows()[y][x].Value) @(GetCurrentMoveAnimationClassName() + State.GetRows()[y][x].AnimationFactor)">
-                                            @GetDisplayString(State.GetPreMoveRows()[y][x].Value)
-                                        </div>
-                                    }
-                                    else
-                                    {
-                                        <div class="tile @GetColourClass(0)"></div>
-                                    }
-                                </td>
-                            }
+                    <tr>
+                        @for (var x = 0; x < State.GetRows()[y].Length; x++)
+                        {
+                            <td class="tile-blank">
+                                @if (State.GetRows()[y][x].Value > 0)
+                                {
+                                    <div class="tile @GetColourClass(State.GetRows()[y][x].Value) @(GetCurrentMoveAnimationClassName() + State.GetRows()[y][x].AnimationFactor) @(State.GetRows()[y][x].NewTile ? "new-tile" : "")">
+                                        @GetDisplayString(State.GetRows()[y][x].Value)
+                                    </div>
+                                }
+                                else
+                                {
+                                    <div class="tile @GetColourClass(0)"></div>
+                                }
+                            </td>
+                        }
 
-                        </tr>
-                    }
-                }
-                else
-                {
-                    @for (var y = 0; y < State.GetRows().Length; y++)
-                    {
-                        <tr>
-                            @for (var x = 0; x < State.GetRows()[y].Length; x++)
-                            {
-                                <td class="tile-blank">
-                                    @if (State.GetPostGenerateRows()[y][x].Value > State.GetPostMoveRows()[y][x].Value)
-                                    {
-                                        <div class="tile @GetColourClass(State.GetRows()[y][x].Value) @(State.GetRows()[y][x].NewTile ? "new-tile" : "")">@GetDisplayString(State.GetRows()[y][x].Value)</div>
-                                    }
-                                    else if (State.GetRows()[y][x].Value > 0)
-                                    {
-                                        <div class="tile @GetColourClass(State.GetRows()[y][x].Value)">@GetDisplayString(State.GetRows()[y][x].Value)</div>
-                                    }
-                                    else
-                                    {
-                                        <div class="tile @GetColourClass(0)"></div>
-                                    }
-                                </td>
-                            }
-
-                        </tr>
-                    }
+                    </tr>
                 }
             </table>
             <div class="d-flex flex-row justify-content-center">

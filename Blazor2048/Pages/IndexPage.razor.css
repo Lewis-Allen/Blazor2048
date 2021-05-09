@@ -99,7 +99,7 @@ td {
 }
 
 .new-tile {
-    animation: createBox .25s;
+    animation: createBox 0.2s;
 }
 
 @keyframes createBox {
@@ -114,62 +114,62 @@ td {
 
 .slideX1 {
     animation-name: slideX1;
-    animation-duration: 0.15s;
+    animation-duration: 0.13s;
 }
 
 .slideX2 {
     animation-name: slideX2;
-    animation-duration: 0.15s;
+    animation-duration: 0.13s;
 }
 
 .slideX3 {
     animation-name: slideX3;
-    animation-duration: 0.15s;
+    animation-duration: 0.13s;
 }
 
 .slide-X1 {
     animation-name: slide-X1;
-    animation-duration: 0.15s;
+    animation-duration: 0.13s;
 }
 
 .slide-X2 {
     animation-name: slide-X2;
-    animation-duration: 0.15s;
+    animation-duration: 0.13s;
 }
 
 .slide-X3 {
     animation-name: slide-X3;
-    animation-duration: 0.15s;
+    animation-duration: 0.13s;
 }
 
 .slideY1 {
     animation-name: slideY1;
-    animation-duration: 0.15s;
+    animation-duration: 0.13s;
 }
 
 .slideY2 {
     animation-name: slideY2;
-    animation-duration: 0.15s;
+    animation-duration: 0.13s;
 }
 
 .slideY3 {
     animation-name: slideY3;
-    animation-duration: 0.15s;
+    animation-duration: 0.13s;
 }
 
 .slide-Y1 {
     animation-name: slide-Y1;
-    animation-duration: 0.15s;
+    animation-duration: 0.13s;
 }
 
 .slide-Y2 {
     animation-name: slide-Y2;
-    animation-duration: 0.15s;
+    animation-duration: 0.13s;
 }
 
 .slide-Y3 {
     animation-name: slide-Y3;
-    animation-duration: 0.15s;
+    animation-duration: 0.13s;
 }
 
 

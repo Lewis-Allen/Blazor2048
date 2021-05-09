@@ -17,10 +17,9 @@ namespace Blazor2048
             Value = value;
         }
 
-        public Tile(int value, bool newTile)
+        public Tile(int value, int animationFactor) : this(value)
         {
-            Value = value;
-            NewTile = newTile;
+            AnimationFactor = animationFactor;
         }
 
         public int Value { get; set; }

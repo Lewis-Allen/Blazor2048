@@ -59,5 +59,8 @@ namespace Blazor2048.Extensions
 
             return transposed;
         }
+
+        public static T[][] GetColumns<T>(this T[] array) => array.Split(4).ToArray();
+        public static T[][] GetRows<T>(this T[] array) => array.Split(4).ToArray().Transpose();
     }
 }
