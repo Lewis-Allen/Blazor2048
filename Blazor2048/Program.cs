@@ -8,6 +8,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Blazored.LocalStorage;
+using Blazor2048.Services;
 
 namespace Blazor2048
 {
@@ -19,6 +20,7 @@ namespace Blazor2048
             builder.RootComponents.Add<App>("#app");
 
             builder.Services.AddBlazoredLocalStorage();
+            builder.Services.AddScoped<IGameStateService, GameStateService>();
 
             await builder.Build().RunAsync();
         }

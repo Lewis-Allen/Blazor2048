@@ -6,26 +6,28 @@ using System.Threading.Tasks;
 
 namespace Blazor2048
 {
-    public class Tile : ICloneable
+    public class Tile
     {
         public int AnimationFactor { get; set; } = 0;
         public bool NewTile { get; set; } = false;
 
+        [JsonConstructor]
         public Tile(int value)
         {
             Value = value;
         }
 
-        public int Value { get; set; }
-
-        public object Clone()
+        public Tile(int value, bool newTile)
         {
-            return new Tile(Value);
+            Value = value;
+            NewTile = newTile;
         }
+
+        public int Value { get; set; }
 
         public override bool Equals(object obj)
         {
-            if(obj is Tile tile)
+            if (obj is Tile tile)
             {
                 return tile.Value == Value;
             }

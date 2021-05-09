@@ -30,16 +30,16 @@ namespace Blazor2048.Extensions
             return reversed;
         }
 
-        public static Tile[][] Split(this Tile[] array, int size)
+        public static T[][] Split<T>(this T[] array, int size)
         {
-            List<Tile[]> tiles = new();
+            T[][] tiles = new T[size][];
 
-            for(var i = 0; i < 4; i++)
+            for(var i = 0; i < size; i++)
             {
-                tiles.Add(array.Skip(i * 4).Take(4).ToArray());
+                tiles[i] = array.Skip(i * size).Take(size).ToArray();
             }
 
-            return tiles.ToArray();
+            return tiles;
         }
 
         public static T[][] Transpose<T>(this T[][] array)

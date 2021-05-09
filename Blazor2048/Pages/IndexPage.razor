@@ -1,0 +1,208 @@
+﻿@page "/"
+@inject IGameStateService State
+
+<div id="background" class="jumbotron m-0 p-0" @onkeydown="@KeyDownAsync" tabindex="0" @ref="GameDiv">
+    @if (State.IsInitialized)
+    {
+        <div id="main-container" class="d-flex flex-column">
+            <div class="d-flex flex-row justify-content-center">
+                <h1 class="game-over">@(State.GameOver ? " Game Over" : "")</h1>
+            </div>
+            <div class="d-flex flex-row justify-content-center">
+                <h1>Score: @State.Score</h1>
+            </div>
+            <div class="d-flex flex-row justify-content-center">
+                <h1>High-Score: @State.HighScore</h1>
+            </div>
+            <table @ontouchstart="HandleTouchStart" @ontouchend="HandleTouchEndAsync">
+                @if (State.IsMoving)
+                {
+                    @for (var y = 0; y < State.GetPreMoveRows().Length; y++)
+                    {
+                        <tr>
+                            @for (var x = 0; x < State.GetPreMoveRows()[y].Length; x++)
+                            {
+                                <td class="tile-blank">
+                                    @if (State.GetPreMoveRows()[y][x].Value > 0)
+                                    {
+                                        <div class="tile @GetColourClass(State.GetPreMoveRows()[y][x].Value) @(GetCurrentMoveAnimationClassName() + State.GetRows()[y][x].AnimationFactor)">
+                                            @GetDisplayString(State.GetPreMoveRows()[y][x].Value)
+                                        </div>
+                                    }
+                                    else
+                                    {
+                                        <div class="tile @GetColourClass(0)"></div>
+                                    }
+                                </td>
+                            }
+
+                        </tr>
+                    }
+                }
+                else
+                {
+                    @for (var y = 0; y < State.GetRows().Length; y++)
+                    {
+                        <tr>
+                            @for (var x = 0; x < State.GetRows()[y].Length; x++)
+                            {
+                                <td class="tile-blank">
+                                    @if (State.GetPostGenerateRows()[y][x].Value > State.GetPostMoveRows()[y][x].Value)
+                                    {
+                                        <div class="tile @GetColourClass(State.GetRows()[y][x].Value) @(State.GetRows()[y][x].NewTile ? "new-tile" : "")">@GetDisplayString(State.GetRows()[y][x].Value)</div>
+                                    }
+                                    else if (State.GetRows()[y][x].Value > 0)
+                                    {
+                                        <div class="tile @GetColourClass(State.GetRows()[y][x].Value)">@GetDisplayString(State.GetRows()[y][x].Value)</div>
+                                    }
+                                    else
+                                    {
+                                        <div class="tile @GetColourClass(0)"></div>
+                                    }
+                                </td>
+                            }
+
+                        </tr>
+                    }
+                }
+            </table>
+            <div class="d-flex flex-row justify-content-center">
+                <button class="btn btn-primary reset" @onclick="ResetAsync">Reset</button>
+            </div>
+        </div>
+    }
+    else
+    {
+        <div class="spinner"></div>
+    }
+</div>
+
+
+
+@code {
+
+    public GameMove? CurrentMove { get; set; } = null;
+    protected ElementReference GameDiv;
+
+    protected async override Task OnInitializedAsync()
+    {
+        await State.InitializeAsync();
+    }
+
+    protected async override Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+            await SetFocusAsync();
+    }
+
+    (TouchPoint ReferencePoint, DateTime StartTime) startPoint;
+
+    protected void HandleTouchStart(TouchEventArgs t)
+    {
+        startPoint.ReferencePoint = t.TargetTouches[0];
+        startPoint.StartTime = DateTime.Now;
+    }
+
+    protected async Task HandleTouchEndAsync(TouchEventArgs t)
+    {
+        const double swipeThreshold = 0.8;
+        try
+        {
+            if (startPoint.ReferencePoint == null)
+            {
+                return;
+            }
+
+            var endReferencePoint = t.ChangedTouches[0];
+
+            var diffX = startPoint.ReferencePoint.ClientX - endReferencePoint.ClientX;
+            var diffY = startPoint.ReferencePoint.ClientY - endReferencePoint.ClientY;
+            var diffTime = DateTime.Now - startPoint.StartTime;
+            var velocityX = Math.Abs(diffX / diffTime.Milliseconds);
+            var velocityY = Math.Abs(diffY / diffTime.Milliseconds);
+
+            if (velocityX < swipeThreshold && velocityY < swipeThreshold) return;
+            if (Math.Abs(velocityX - velocityY) < .5) return;
+            if (State.IsMoving) return;
+
+            if (velocityX >= swipeThreshold)
+            {
+                CurrentMove = diffX < 0 ? GameMove.RIGHT : GameMove.LEFT;
+                await State.MoveAsync(CurrentMove.Value);
+                CurrentMove = null;
+            }
+            if (velocityY >= swipeThreshold)
+            {
+                CurrentMove = diffY < 0 ? GameMove.DOWN : GameMove.UP;
+                await State.MoveAsync(CurrentMove.Value);
+                CurrentMove = null;
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Gesture failed: Message - {ex.Message}");
+        }
+    }
+
+    protected async Task SetFocusAsync()
+    {
+        await GameDiv.FocusAsync();
+    }
+
+    protected async Task KeyDownAsync(KeyboardEventArgs args)
+    {
+        if (State.IsMoving)
+            return;
+
+        CurrentMove = args.Key switch
+        {
+            "ArrowUp" => GameMove.UP,
+            "ArrowRight" => GameMove.RIGHT,
+            "ArrowDown" => GameMove.DOWN,
+            "ArrowLeft" => GameMove.LEFT,
+            _ => null
+        };
+
+        if (CurrentMove.HasValue)
+        {
+            await State.MoveAsync(CurrentMove.Value);
+            CurrentMove = null;
+        }
+    }
+
+    public async Task ResetAsync()
+    {
+        await State.ResetBoardAsync();
+        await SetFocusAsync();
+    }
+
+    protected string GetColourClass(int value)
+        => value switch
+        {
+            2 => "tile-yellow",
+            4 => "tile-pink",
+            8 => "tile-blue",
+            16 => "tile-orange",
+            32 => "tile-red",
+            64 => "tile-purple",
+            128 => "tile-black",
+            256 => "tile-turquoise",
+            512 => "tile-oranger",
+            1024 => "tile-green",
+            2048 => "tile-bright-pink",
+            _ => "tile-blank"
+        };
+
+    protected string GetDisplayString(int value)
+        => value == 0 ? "" : value.ToString();
+
+    protected string GetCurrentMoveAnimationClassName()
+        => CurrentMove switch
+        {
+            GameMove.UP => "slide-Y",
+            GameMove.RIGHT => "slideX",
+            GameMove.DOWN => "slideY",
+            GameMove.LEFT => "slide-X",
+            _ => ""
+        };
+}

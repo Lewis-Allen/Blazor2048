@@ -4,78 +4,75 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Blazor2048.Enums;
 
-
-namespace Blazor2048
+namespace Blazor2048.Services
 {
-    public class GameModel
+    public class GameStateService : IGameStateService
     {
-        // Board sizes
-        private const int BOARD_HEIGHT = 4;
-        private const int BOARD_WIDTH = 4;
-
-        // Local Storage Keys
-        private const string LS_TILES = "Tiles";
-        private const string LS_HIGH_SCORE = "HighScore";
+        private readonly ILocalStorageService _localStorage;
+        private readonly Random r = new Random();
 
         // Representation of the board.
-        public Tile[] Tiles { get; } = new Tile[BOARD_HEIGHT * BOARD_WIDTH];
-        public Tile[][] Rows { get; } = new Tile[BOARD_HEIGHT][];
-        public Tile[][] Columns { get; } = new Tile[BOARD_WIDTH][];
+        private Tile[] Tiles { get; set; } = new Tile[Constants.BOARD_HEIGHT * Constants.BOARD_WIDTH];
+        private Tile[][] Rows { get; } = new Tile[Constants.BOARD_HEIGHT][];
+        private Tile[][] Columns { get; } = new Tile[Constants.BOARD_WIDTH][];
 
-        // Helper properties to store state at various points in the move. Used for animations.
-        public Tile[] PreMoveTiles { get; set; } = new Tile[BOARD_HEIGHT * BOARD_WIDTH];
-        public Tile[] PostMoveTiles { get; set; } = new Tile[BOARD_HEIGHT * BOARD_WIDTH];
-        public Tile[] PostGenerateTiles { get; set; } = new Tile[BOARD_HEIGHT * BOARD_WIDTH];
+        // Helper properties to store state at various points in a move. Used for animations.
+        private Tile[] PreMoveTiles { get; set; } = new Tile[Constants.BOARD_HEIGHT * Constants.BOARD_WIDTH];
+        private Tile[] PostMoveTiles { get; set; } = new Tile[Constants.BOARD_HEIGHT * Constants.BOARD_WIDTH];
+        private Tile[] PostGenerateTiles { get; set; } = new Tile[Constants.BOARD_HEIGHT * Constants.BOARD_WIDTH];
 
         public int Score { get; private set; } = 0;
         public int HighScore { get; private set; } = 0;
         public bool GameOver { get; private set; } = false;
-        public bool IsMoving { get; set; } = false;
+        public bool IsMoving { get; private set; } = false;
+        public bool IsInitialized { get; private set; } = false;
 
-        private readonly Random r = new Random();
-        private readonly ISyncLocalStorageService _localStorage;
-
-        public GameModel(ISyncLocalStorageService localStorage)
+        public GameStateService(ILocalStorageService localStorage)
         {
             _localStorage = localStorage;
+        }
 
-            int highScore = _localStorage.GetItem<int>(LS_HIGH_SCORE);
+        public Tile[][] GetRows() => Rows;
+        public Tile[][] GetPreMoveRows() => PreMoveTiles.Split(4).ToArray().Transpose();
+        public Tile[][] GetPostMoveRows() => PostMoveTiles.Split(4).ToArray().Transpose();
+        public Tile[][] GetPostGenerateRows() => PostGenerateTiles.Split(4).ToArray().Transpose();
+
+        public async Task InitializeAsync()
+        {
+            int highScore = await _localStorage.GetItemAsync<int>(Constants.LS_HIGH_SCORE);
             if (highScore > 0)
                 HighScore = highScore;
 
             bool loadedFromStorage = false;
-            if (_localStorage.ContainKey(LS_TILES))
+            if (await _localStorage.ContainKeyAsync(Constants.LS_TILES))
             {
-                Tiles = _localStorage.GetItem<Tile[]>(LS_TILES);
+                Tiles = await _localStorage.GetItemAsync<Tile[]>(Constants.LS_TILES);
                 foreach (var tile in Tiles)
                     tile.NewTile = true;
 
                 PreMoveTiles = Tiles.Select(_ => new Tile(0)).ToArray();
                 PostMoveTiles = Tiles.Select(_ => new Tile(0)).ToArray();
-                PostGenerateTiles = Tiles.Select(a => new Tile(a.Value)).ToArray();
+                PostGenerateTiles = Tiles.Select(t => new Tile(t.Value)).ToArray();
 
                 loadedFromStorage = true;
             }
 
-            for (var y = 0; y < BOARD_HEIGHT; y++)
-            {
-                Rows[y] = new Tile[BOARD_WIDTH];
-            }
+            for (var y = 0; y < Constants.BOARD_HEIGHT; y++)
+                Rows[y] = new Tile[Constants.BOARD_WIDTH];
 
-            for (var x = 0; x < BOARD_WIDTH; x++)
-            {
-                Columns[x] = new Tile[BOARD_HEIGHT];
-            }
+            for (var x = 0; x < Constants.BOARD_WIDTH; x++)
+                Columns[x] = new Tile[Constants.BOARD_HEIGHT];
 
             var counter = 0;
-            for (var x = 0; x < BOARD_WIDTH; x++)
+            for (var x = 0; x < Constants.BOARD_WIDTH; x++)
             {
-                for (var y = 0; y < BOARD_HEIGHT; y++)
+                for (var y = 0; y < Constants.BOARD_HEIGHT; y++)
                 {
                     var tile = loadedFromStorage ? Tiles[counter] : new Tile(0);
 
-                    if(!loadedFromStorage)
+                    if (!loadedFromStorage)
                         Tiles[counter] = tile;
 
                     Rows[y][x] = tile;
@@ -85,70 +82,71 @@ namespace Blazor2048
                 }
             }
 
-            if (!loadedFromStorage)
+            if (loadedFromStorage)
             {
-                ResetBoard();
+                await CalcScoreAsync();
             }
             else
             {
-                CalcScore();
+                await ResetBoardAsync();
             }
+            IsInitialized = true;
         }
 
-        public void ResetBoard()
+        public async Task ResetBoardAsync()
         {
             Tiles.ToList().ForEach(t => t.Value = 0);
             GameOver = false;
 
-            PreMoveTiles = Tiles.Select(a => (Tile)a.Clone()).ToArray();
+            PreMoveTiles = Tiles.Select(t => new Tile(t.Value)).ToArray();
 
-            PostMoveTiles = Tiles.Select(a => (Tile)a.Clone()).ToArray();
+            PostMoveTiles = Tiles.Select(t => new Tile(t.Value)).ToArray();
 
             for (var i = 0; i < 2; i++)
             {
-                GenerateNewTile();
+                await GenerateNewTileAsync();
             }
 
-            PostGenerateTiles = Tiles.Select(a => (Tile)a.Clone()).ToArray();
+            PostGenerateTiles = Tiles.Select(t => new Tile(t.Value)).ToArray();
 
-            _localStorage.SetItem(LS_TILES, Tiles);
+            await _localStorage.SetItemAsync(Constants.LS_TILES, Tiles);
         }
 
-        private bool HasLost()
-            => Tiles.ToList().All(t => t.Value > 0) && !(Rows.Any(t => t.HasConsecutiveDuplicates()) || Columns.Any(t => t.HasConsecutiveDuplicates()));
+        private async Task<bool> HasLost()
+            => await Task.FromResult(Tiles.ToList().All(t => t.Value > 0) && !(Rows.Any(t => t.HasConsecutiveDuplicates()) || Columns.Any(t => t.HasConsecutiveDuplicates())));
 
 
-        private void CalcScore()
+        private async Task CalcScoreAsync()
         {
             Score = Tiles.Sum(t => t.Value);
             if (Score > HighScore)
             {
                 HighScore = Score;
-                _localStorage.SetItem(LS_HIGH_SCORE, HighScore);
+                await _localStorage.SetItemAsync(Constants.LS_HIGH_SCORE, HighScore);
             }
         }
 
-        private void GenerateNewTile()
+        private async Task GenerateNewTileAsync()
         {
             List<Tile> emptyTiles = Tiles.ToList().Where(t => t.Value == 0).ToList();
             int index = r.Next(emptyTiles.Count);
 
-            emptyTiles[index].Value = GenerateNewTileValue();
+            emptyTiles[index].Value = await GenerateNewTileValueAsync();
             emptyTiles[index].NewTile = true;
-            CalcScore();
+            await CalcScoreAsync();
         }
 
-        private int GenerateNewTileValue()
+        private async Task<int> GenerateNewTileValueAsync()
         {
-            return r.Next(0, 100) <= 89 ? 2 : 4;
+            return await Task.FromResult(r.Next(0, 100) <= 89 ? 2 : 4);
         }
 
-        public async Task Move(GameMove move)
+        public async Task MoveAsync(GameMove move)
         {
             if (GameOver)
                 return;
 
-            PreMoveTiles = Tiles.Select(a => (Tile)a.Clone()).ToArray();
+            PreMoveTiles = Tiles.Select(t => new Tile(t.Value)).ToArray();
 
             IsMoving = true;
 
@@ -164,30 +162,30 @@ namespace Blazor2048
 
             if (HasMoved)
             {
-                PostMoveTiles = Tiles.Select(a => (Tile)a.Clone()).ToArray();
+                PostMoveTiles = Tiles.Select(t => new Tile(t.Value)).ToArray();
 
                 // This delay is here to give the current tiles time to animate before the new tiles are rendered.
                 await Task.Delay(140);
 
-                foreach(var tile in Tiles)
+                foreach (var tile in Tiles)
                 {
                     tile.AnimationFactor = 0;
                     tile.NewTile = false;
                 }
 
-                GenerateNewTile();
+                await GenerateNewTileAsync();
 
-                PostGenerateTiles = Tiles.Select(a => (Tile)a.Clone()).ToArray();
+                PostGenerateTiles = Tiles.Select(t => new Tile(t.Value)).ToArray();
 
-                GameOver = HasLost();
-                
-                if(GameOver)
+                GameOver = await HasLost();
+
+                if (GameOver)
                 {
-                    _localStorage.RemoveItem(LS_TILES);
+                    await _localStorage.RemoveItemAsync(Constants.LS_TILES);
                 }
                 else
                 {
-                    _localStorage.SetItem(LS_TILES, Tiles);
+                    await _localStorage.SetItemAsync(Constants.LS_TILES, Tiles);
                 }
             }
             IsMoving = false;
