@@ -1,11 +1,10 @@
 ﻿using Blazor2048.Extensions;
+using Blazored.LocalStorage;
 using System;
 using System.Collections.Generic;
-using System.Dynamic;
 using System.Linq;
-using System.Runtime.CompilerServices;
-using System.Threading;
 using System.Threading.Tasks;
+
 
 namespace Blazor2048
 {
@@ -14,6 +13,10 @@ namespace Blazor2048
         // Board sizes
         private const int BOARD_HEIGHT = 4;
         private const int BOARD_WIDTH = 4;
+
+        // Local Storage Keys
+        private const string LS_TILES = "Tiles";
+        private const string LS_HIGH_SCORE = "HighScore";
 
         // Representation of the board.
         public Tile[] Tiles { get; } = new Tile[BOARD_HEIGHT * BOARD_WIDTH];
@@ -31,9 +34,30 @@ namespace Blazor2048
         public bool IsMoving { get; set; } = false;
 
         private readonly Random r = new Random();
+        private readonly ISyncLocalStorageService _localStorage;
 
-        public GameModel()
+        public GameModel(ISyncLocalStorageService localStorage)
         {
+            _localStorage = localStorage;
+
+            int highScore = _localStorage.GetItem<int>(LS_HIGH_SCORE);
+            if (highScore > 0)
+                HighScore = highScore;
+
+            bool loadedFromStorage = false;
+            if (_localStorage.ContainKey(LS_TILES))
+            {
+                Tiles = _localStorage.GetItem<Tile[]>(LS_TILES);
+                foreach (var tile in Tiles)
+                    tile.NewTile = true;
+
+                PreMoveTiles = Tiles.Select(_ => new Tile(0)).ToArray();
+                PostMoveTiles = Tiles.Select(_ => new Tile(0)).ToArray();
+                PostGenerateTiles = Tiles.Select(a => new Tile(a.Value)).ToArray();
+
+                loadedFromStorage = true;
+            }
+
             for (var y = 0; y < BOARD_HEIGHT; y++)
             {
                 Rows[y] = new Tile[BOARD_WIDTH];
@@ -49,9 +73,11 @@ namespace Blazor2048
             {
                 for (var y = 0; y < BOARD_HEIGHT; y++)
                 {
-                    var tile = new Tile(0);
+                    var tile = loadedFromStorage ? Tiles[counter] : new Tile(0);
 
-                    Tiles[counter] = tile;
+                    if(!loadedFromStorage)
+                        Tiles[counter] = tile;
+
                     Rows[y][x] = tile;
                     Columns[x][y] = tile;
 
@@ -59,7 +85,14 @@ namespace Blazor2048
                 }
             }
 
-            ResetBoard();
+            if (!loadedFromStorage)
+            {
+                ResetBoard();
+            }
+            else
+            {
+                CalcScore();
+            }
         }
 
         public void ResetBoard()
@@ -77,6 +110,8 @@ namespace Blazor2048
             }
 
             PostGenerateTiles = Tiles.Select(a => (Tile)a.Clone()).ToArray();
+
+            _localStorage.SetItem(LS_TILES, Tiles);
         }
 
         private bool HasLost()
@@ -87,7 +122,10 @@ namespace Blazor2048
         {
             Score = Tiles.Sum(t => t.Value);
             if (Score > HighScore)
+            {
                 HighScore = Score;
+                _localStorage.SetItem(LS_HIGH_SCORE, HighScore);
+            }
         }
 
         private void GenerateNewTile()
@@ -142,6 +180,15 @@ namespace Blazor2048
                 PostGenerateTiles = Tiles.Select(a => (Tile)a.Clone()).ToArray();
 
                 GameOver = HasLost();
+                
+                if(GameOver)
+                {
+                    _localStorage.RemoveItem(LS_TILES);
+                }
+                else
+                {
+                    _localStorage.SetItem(LS_TILES, Tiles);
+                }
             }
             IsMoving = false;
         }

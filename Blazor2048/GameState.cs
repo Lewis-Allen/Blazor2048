@@ -1,4 +1,5 @@
 ﻿using Blazor2048.Extensions;
+using Blazored.LocalStorage;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
@@ -9,35 +10,36 @@ namespace Blazor2048
 {
     public class GameState
     {
-        public GameModel Model { get; set; } = new GameModel();
+        private readonly GameModel _model;
 
-        public GameState()
+        public GameState(ISyncLocalStorageService localStorage)
         {
+            _model = new GameModel(localStorage);
         }
 
         public async Task Move(GameMove move)
         {
-            await Model.Move(move);
+            await _model.Move(move);
         }
 
         public void ResetGame()
         {
-            Model.ResetBoard();
+            _model.ResetBoard();
         }
 
-        public Tile[] GetTiles() => Model.Tiles;
-        public Tile[] GetPreMoveTiles() => Model.PreMoveTiles;
-        public Tile[][] GetPreMoveRows() => Model.PreMoveTiles.Split(4).ToArray().Transpose();
-        public Tile[] GetPostMoveTiles() => Model.PostMoveTiles;
-        public Tile[][] GetPostMoveRows() => Model.PostMoveTiles.Split(4).ToArray().Transpose();
-        public Tile[] GetPostGenerateTiles() => Model.PostGenerateTiles;
-        public Tile[][] GetPostGenerateRows() => Model.PostGenerateTiles.Split(4).ToArray().Transpose();
-        public Tile[][] GetRows() => Model.Rows;
-        public Tile[][] GetColumns() => Model.Columns;
-        public int GetScore() => Model.Score;
-        public int GetHighScore() => Model.HighScore;
-        public bool GetGameOverStatus() => Model.GameOver;
-        public bool IsMoving() => Model.IsMoving;
+        public Tile[] GetTiles() => _model.Tiles;
+        public Tile[] GetPreMoveTiles() => _model.PreMoveTiles;
+        public Tile[][] GetPreMoveRows() => _model.PreMoveTiles.Split(4).ToArray().Transpose();
+        public Tile[] GetPostMoveTiles() => _model.PostMoveTiles;
+        public Tile[][] GetPostMoveRows() => _model.PostMoveTiles.Split(4).ToArray().Transpose();
+        public Tile[] GetPostGenerateTiles() => _model.PostGenerateTiles;
+        public Tile[][] GetPostGenerateRows() => _model.PostGenerateTiles.Split(4).ToArray().Transpose();
+        public Tile[][] GetRows() => _model.Rows;
+        public Tile[][] GetColumns() => _model.Columns;
+        public int GetScore() => _model.Score;
+        public int GetHighScore() => _model.HighScore;
+        public bool GetGameOverStatus() => _model.GameOver;
+        public bool IsMoving() => _model.IsMoving;
     }
 
     public enum GameMove

@@ -1,5 +1,8 @@
 ﻿@page "/"
+@inject Blazored.LocalStorage.ISyncLocalStorageService localStorage
 
+@if(State != null)
+{
 <div id="background" class="jumbotron m-0 p-0" @onkeydown="@KeyDown" tabindex="0" @ref="GameDiv">
     <div id="main-container" class="d-flex flex-column">
         <div class="d-flex flex-row justify-content-center">
@@ -68,16 +71,21 @@
         </div>
     </div>
 </div>
-
+}
 
 
 @code {
 
-    GameState State = new GameState();
+    GameState State;
 
     public GameMove? CurrentMove { get; set; } = null;
 
     protected ElementReference GameDiv;
+
+    protected override void OnInitialized()
+    {
+        State = new GameState(localStorage);
+    }
 
     protected async override Task OnAfterRenderAsync(bool firstRender)
     {
@@ -128,9 +136,9 @@
                 CurrentMove = null;
             }
         }
-        catch (Exception e)
+        catch (Exception ex)
         {
-            Console.WriteLine("Gesture failed.");
+            Console.WriteLine($"Gesture failed: Message - {ex.Message}");
         }
     }
 
@@ -144,7 +152,8 @@
         if (State.IsMoving())
             return;
 
-        CurrentMove = args.Key switch {
+        CurrentMove = args.Key switch
+        {
             "ArrowUp" => GameMove.UP,
             "ArrowRight" => GameMove.RIGHT,
             "ArrowDown" => GameMove.DOWN,
