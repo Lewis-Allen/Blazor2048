@@ -35,56 +35,38 @@ namespace Blazor2048.Services
             if (highScore > 0)
                 HighScore = highScore;
 
-            bool loadedFromStorage = false;
             if (await _localStorage.ContainKeyAsync(Constants.LS_TILES))
             {
                 Tiles = await _localStorage.GetItemAsync<Tile[]>(Constants.LS_TILES);
                 foreach (var tile in Tiles)
                     tile.NewTile = true;
 
-                loadedFromStorage = true;
-            }
-
-            var counter = 0;
-            for (var x = 0; x < Constants.BOARD_WIDTH; x++)
-            {
-                for (var y = 0; y < Constants.BOARD_HEIGHT; y++)
-                {
-                    var tile = loadedFromStorage ? Tiles[counter] : new Tile(0);
-
-                    if (!loadedFromStorage)
-                        Tiles[counter] = tile;
-
-                    counter++;
-                }
-            }
-
-            if (loadedFromStorage)
-            {
                 await CalcScoreAsync();
             }
             else
             {
                 await ResetBoardAsync();
             }
+
             IsInitialized = true;
         }
 
         public async Task ResetBoardAsync()
         {
-            Tiles.ToList().ForEach(t => t.Value = 0);
+            for (var i = 0; i < Tiles.Length; i++)
+                Tiles[i] = new Tile(0);
+
             GameOver = false;
 
             for (var i = 0; i < Constants.BOARD_STARTING_TILES; i++)
-            {
                 await GenerateNewTileAsync();
-            }
 
             await _localStorage.SetItemAsync(Constants.LS_TILES, Tiles);
         }
 
         private async Task<bool> HasLost()
-            => await Task.FromResult(Tiles.ToList().All(t => t.Value > 0) && !(Tiles.GetRows().Any(t => t.HasConsecutiveDuplicates()) || Tiles.GetColumns().Any(t => t.HasConsecutiveDuplicates())));
+            => await Task.FromResult(Tiles.ToList().All(t => t.Value > 0) 
+                && !(Tiles.GetRows().Any(t => t.HasConsecutiveDuplicates()) || Tiles.GetColumns().Any(t => t.HasConsecutiveDuplicates())));
 
 
         private async Task CalcScoreAsync()
@@ -99,11 +81,13 @@ namespace Blazor2048.Services
 
         private async Task GenerateNewTileAsync()
         {
-            List<Tile> emptyTiles = Tiles.ToList().Where(t => t.Value == 0).ToList();
-            int index = r.Next(emptyTiles.Count);
+            Tile[] emptyTiles = Tiles.Where(t => t.Value == 0).ToArray();
+            int index = r.Next(emptyTiles.Length);
+            
+            Tile tile = emptyTiles[index];
+            tile.Value = await GenerateNewTileValueAsync();
+            tile.NewTile = true;
 
-            emptyTiles[index].Value = await GenerateNewTileValueAsync();
-            emptyTiles[index].NewTile = true;
             await CalcScoreAsync();
         }
 
