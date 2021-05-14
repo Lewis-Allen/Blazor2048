@@ -1,0 +1,48 @@
+﻿<td class="tile-blank">
+    @if (Value > 0)
+    {
+        <div class="tile @GetColourClass(Value) @(GetMoveAnimationClassName(CurrentMove) + AnimationFactor) @(NewTile ? "new-tile" : "")">
+            @Value
+        </div>
+    }
+    else
+    {
+        <div class="tile @GetColourClass(0)"></div>
+    }
+</td>
+
+
+@code {
+
+    [Parameter] public int Value { get; set; }
+    [Parameter] public int AnimationFactor { get; set; }
+    [Parameter] public bool NewTile { get; set; }
+    [Parameter] public GameMove? CurrentMove { get; set; }
+
+    protected string GetColourClass(int value)
+        => value switch
+        {
+            2 => "tile-yellow",
+            4 => "tile-pink",
+            8 => "tile-blue",
+            16 => "tile-orange",
+            32 => "tile-red",
+            64 => "tile-purple",
+            128 => "tile-black",
+            256 => "tile-turquoise",
+            512 => "tile-oranger",
+            1024 => "tile-green",
+            2048 => "tile-bright-pink",
+            _ => "tile-blank"
+        };
+
+    protected string GetMoveAnimationClassName(GameMove? move)
+        => move switch
+        {
+            GameMove.UP => "slide-Y",
+            GameMove.RIGHT => "slideX",
+            GameMove.DOWN => "slideY",
+            GameMove.LEFT => "slide-X",
+            _ => ""
+        };
+}
