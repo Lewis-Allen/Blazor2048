@@ -10,6 +10,7 @@ namespace Blazor2048
     {
         public int AnimationFactor { get; set; } = 0;
         public bool NewTile { get; set; } = false;
+        public bool Merged { get; set; } = false;
 
         [JsonConstructor]
         public Tile(int value)
@@ -20,6 +21,11 @@ namespace Blazor2048
         public Tile(int value, int animationFactor) : this(value)
         {
             AnimationFactor = animationFactor;
+        }
+
+        public Tile(int value, bool merged) : this(value)
+        {
+            Merged = merged;
         }
 
         public int Value { get; set; }

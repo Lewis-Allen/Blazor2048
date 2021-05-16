@@ -1,7 +1,7 @@
 ﻿<td class="tile-blank">
     @if (Value > 0)
     {
-        <div class="tile @GetColourClass(Value) @(GetMoveAnimationClassName(CurrentMove) + AnimationFactor) @(NewTile ? "new-tile" : "")">
+        <div class="tile @GetColourClass(Value) @(GetMoveAnimationClassName(CurrentMove) + AnimationFactor) @(Merged ? "merged" : "") @(NewTile ? "new-tile" : "")">
             @Value
         </div>
     }
@@ -17,6 +17,7 @@
     [Parameter] public int Value { get; set; }
     [Parameter] public int AnimationFactor { get; set; }
     [Parameter] public bool NewTile { get; set; }
+    [Parameter] public bool Merged { get; set; }
     [Parameter] public GameMove? CurrentMove { get; set; }
 
     protected string GetColourClass(int value)

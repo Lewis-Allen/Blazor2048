@@ -126,7 +126,7 @@ namespace Blazor2048.Services
                 await Task.Delay(120);
 
                 // Render the new tiles in their new positions.
-                Tiles = newTiles.Select(t => new Tile(t.Value)).ToArray();
+                Tiles = newTiles.Select(t => new Tile(t.Value, t.Merged)).ToArray();
 
                 await GenerateNewTileAsync();
 
@@ -138,7 +138,7 @@ namespace Blazor2048.Services
                 }
                 else
                 {
-                    await _localStorage.SetItemAsync(Constants.LS_TILES, Tiles);
+                    await _localStorage.SetItemAsync(Constants.LS_TILES, Tiles.Select(t => new Tile(t.Value)).ToArray());
                 }
             }
             IsMoving = false;
@@ -172,6 +172,7 @@ namespace Blazor2048.Services
                         var value = tiles[x1].Value + tiles[x2].Value;
                         tiles[x2].Value = 0;
                         tiles[x1].Value = value;
+                        tiles[x1].Merged = true;
                         tiles[x2].AnimationFactor = x2 - x1;
                         hasMoved = true;
                         break;
