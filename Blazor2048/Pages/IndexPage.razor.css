@@ -1,17 +1,18 @@
 ﻿table {
     margin: 1em auto;
     font-size: 32px;
-    border: 5px solid;
     touch-action: none;
-}
-
-table {
     padding: 0;
+    border-radius: 10px;
+    border-collapse: separate;
+    border: 5px solid #D0C8C8;
+    background-color: #F8DFDD;
 }
 
 #background, #main-container {
     min-height: 100vh;
     height: 100%;
+    background-color: #fdf4f5;
 }
 
 .reset {
